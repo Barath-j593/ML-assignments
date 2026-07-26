@@ -1,3 +1,4 @@
+
 \documentclass[12pt,a4paper]{article}
 
 \usepackage[a4paper,margin=1in]{geometry}
@@ -11,7 +12,6 @@
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{longtable}
-\usepackage{array}
 
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 
@@ -48,349 +48,93 @@ To explore the core Python libraries used in a Machine Learning workflow -- NumP
 SciPy, Scikit-learn, and Matplotlib -- and to understand key operations such as array
 manipulation, data preprocessing, mathematical computing, model building, and data
 visualization. Further, to explore publicly available datasets from the UCI Machine Learning
-Repository and Kaggle, identify the type of Machine Learning task associated with each
-(Supervised/Unsupervised, Classification/Regression), and perform Exploratory Data Analysis
-(EDA) on them using a reusable, general-purpose EDA toolkit.
+Repository and Kaggle, identify the type of Machine Learning task associated with each, and
+perform Exploratory Data Analysis (EDA) on them.
 
 \section{Problem Statement}
-Given a set of five publicly available datasets -- the Iris dataset, a Loan Amount Prediction
-dataset, a Diabetes Prediction dataset, an Email Spam Classification dataset, and the MNIST
-Handwritten Digit dataset -- the task is to:
-\begin{itemize}
-\item Identify the nature of each dataset (tabular numeric, tabular categorical, text, or
-image) and the corresponding Machine Learning task (regression, binary classification,
-multi-class classification).
-\item Load each dataset using Pandas and inspect it using NumPy- and SciPy-based numerical
-routines.
-\item Build a single, reusable EDA toolkit capable of handling all four data modalities
-(tabular, text, image-as-CSV, and image-folder datasets) so that the same code can be applied
-to any new dataset with minimal changes.
-\item Summarize, visualize, and interpret each dataset so that an appropriate feature
-selection technique and ML algorithm can be recommended for it.
-\end{itemize}
-The input to the workflow is a raw dataset file (CSV or an image directory); the output is a
-statistical and visual understanding of the dataset (distributions, missing values,
-correlations, class balance, outliers) that guides subsequent preprocessing and modelling
-decisions.
-
-\section{Python Libraries for Machine Learning}
-
-\subsection{NumPy}
-NumPy provides the \texttt{ndarray} object for fast, vectorized numerical computation.
-Functions explored include \texttt{np.array}, \texttt{np.reshape}, \texttt{np.arange},
-\texttt{np.linspace}, \texttt{np.mean}, \texttt{np.std}, \texttt{np.sum}, broadcasting rules,
-boolean indexing (used for IQR-based outlier detection), and \texttt{np.number} for
-selecting numeric dtypes from a DataFrame.
-
-\subsection{Pandas}
-Pandas provides the \texttt{DataFrame}/\texttt{Series} structures used to load and manipulate
-tabular data. Key operations explored: \texttt{read\_csv}, \texttt{head}, \texttt{shape},
-\texttt{dtypes}, \texttt{info}, \texttt{describe}, \texttt{isnull().sum()},
-\texttt{duplicated()}, \texttt{nunique()}, \texttt{value\_counts()},
-\texttt{select\_dtypes()}, \texttt{corr()}, \texttt{skew()}, and \texttt{kurt()} --
-all of which are used directly inside the EDA toolkit in Section~\ref{sec:eda-toolkit}.
-
-\subsection{SciPy}
-SciPy extends NumPy with statistical and scientific routines. Relevant modules for this
-experiment include \texttt{scipy.stats} (e.g. \texttt{skew}, \texttt{kurtosis},
-\texttt{zscore}, \texttt{chi2\_contingency} for categorical association tests, and
-\texttt{pearsonr}/\texttt{spearmanr} for correlation testing), which complement Pandas'
-built-in statistical summaries.
-
-\subsection{Scikit-learn}
-Scikit-learn provides a consistent \texttt{fit}/\texttt{transform}/\texttt{predict} API for
-preprocessing, feature selection, and modelling. Relevant utilities include
-\texttt{train\_test\_split}, \texttt{StandardScaler}/\texttt{MinMaxScaler},
-\texttt{LabelEncoder}/\texttt{OneHotEncoder}, \texttt{SelectKBest}, \texttt{chi2}, \texttt{f\_classif}
-(ANOVA F-test), and estimator classes such as \texttt{LogisticRegression},
-\texttt{DecisionTreeClassifier}, \texttt{RandomForestClassifier}, and \texttt{KMeans}.
-
-\subsection{Matplotlib \& Seaborn}
-Matplotlib (via \texttt{pyplot}) and Seaborn provide the visualization layer used throughout
-the toolkit -- histograms (\texttt{sns.histplot}), box plots (\texttt{sns.boxplot}), count
-plots (\texttt{sns.countplot}), heatmaps (\texttt{sns.heatmap}) for missing values and
-correlation, and \texttt{sns.pairplot} for multivariate numeric relationships.
-
-\section{Universal EDA Toolkit}
-\label{sec:eda-toolkit}
-To avoid rewriting EDA code for every new dataset, a single reusable toolkit was built with
-four entry-point functions, one for each data modality encountered in this experiment:
-\texttt{eda\_tabular()} for numeric/categorical CSV data (Loan, Diabetes, Iris),
-\texttt{eda\_text()} for text CSV data (Email Spam), \texttt{eda\_image\_csv()} for
-pixel-flattened image CSV data (MNIST), and \texttt{eda\_image\_folder()} for image datasets
-stored as class-labelled folders (Handwritten Character Recognition).
-
-\subsection{Setup}
-\begin{lstlisting}
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
-from PIL import Image
-\end{lstlisting}
-
-\subsection{Tabular EDA -- \texttt{eda\_tabular()}}
-Used for datasets such as \textit{Loan Amount Prediction}, \textit{Diabetes Prediction}, and
-the \textit{Iris} dataset. It prints the head, shape, column names, data types, a full
-\texttt{describe()} summary, missing-value counts, and duplicate-row counts; plots a missing
-value heatmap, histograms and box plots for every numeric column, and count plots for every
-low-cardinality categorical column; computes a correlation heatmap and pair plot when there
-are multiple numeric columns; and finally reports skewness, kurtosis, and IQR-based outlier
-counts for every numeric feature.
-\begin{lstlisting}
-def eda_tabular(csv_path):
-    df = pd.read_csv(csv_path)
-
-    print("="*60)
-    print("HEAD")
-    print(df.head())
-
-    print("\nShape:", df.shape)
-    print("\nColumns:", list(df.columns))
-    print("\nData Types")
-    print(df.dtypes)
-
-    print("\nInfo")
-    df.info()
-
-    print("\nSummary")
-    print(df.describe(include="all"))
-
-    print("\nMissing Values")
-    print(df.isnull().sum())
-
-    sns.heatmap(df.isnull(), cbar=False)
-    plt.title("Missing Values")
-    plt.show()
-
-    print("\nDuplicates:", df.duplicated().sum())
-
-    # ----------------------------- # Unique Values # -----------------------------
-    print("\n"+"="*60)
-    print("UNIQUE VALUES")
-    print("="*60)
-    for col in df.columns: print(f"{col} : {df[col].nunique()}")
-
-    num_cols = df.select_dtypes(include=np.number).columns
-    cat_cols = df.select_dtypes(exclude=np.number).columns
-
-    for c in num_cols:
-        plt.figure(figsize=(6,4))
-        sns.histplot(df[c].dropna(), kde=True)
-        plt.title(c)
-        plt.show()
-
-        plt.figure(figsize=(6,2.5))
-        sns.boxplot(x=df[c].dropna())
-        plt.title(c)
-        plt.show()
-
-    for c in cat_cols:
-        if df[c].nunique()<=20:
-            plt.figure(figsize=(7,4))
-            sns.countplot(x=df[c])
-            plt.xticks(rotation=45)
-            plt.title(c)
-            plt.show()
-
-    if len(num_cols)>1:
-        plt.figure(figsize=(10,8))
-        sns.heatmap(df[num_cols].corr(),annot=True,cmap="coolwarm")
-        plt.show()
-
-        if len(num_cols)<=8:
-            sns.pairplot(df[num_cols])
-            plt.show()
-
-    print("\nSkewness")
-    print(df[num_cols].skew())
-
-    print("\nKurtosis")
-    print(df[num_cols].kurt())
-
-    print("\nOutliers (IQR)")
-    for c in num_cols:
-        q1=df[c].quantile(.25)
-        q3=df[c].quantile(.75)
-        iqr=q3-q1
-        low=q1-1.5*iqr
-        high=q3+1.5*iqr
-        print(c,((df[c]<low)|(df[c]>high)).sum())
-\end{lstlisting}
-
-\subsection{Text EDA -- \texttt{eda\_text()}}
-Used for the \textit{Email Spam} dataset. It reports the standard shape/type/missing-value
-summary, then treats low-cardinality object columns (e.g. the spam/ham label) as categorical
-and plots their distribution, while high-cardinality object columns (the raw message text)
-are analyzed for character length and word-count distributions.
-\begin{lstlisting}
-def eda_text(csv_path):
-    df=pd.read_csv(csv_path)
-
-    print(df.head())
-    print(df.shape)
-    print(df.dtypes)
-    print(df.isnull().sum())
-    print("Duplicates:",df.duplicated().sum())
-
-    text_cols=df.select_dtypes(include="object").columns
-
-    print("Text Columns:",list(text_cols))
-
-    for c in text_cols:
-        if df[c].nunique()<=20:
-            print(df[c].value_counts())
-            sns.countplot(x=df[c])
-            plt.xticks(rotation=45)
-            plt.title(c)
-            plt.show()
-
-    for c in text_cols:
-        if df[c].nunique()>20:
-            temp=df[c].astype(str)
-            lengths=temp.apply(len)
-            words=temp.apply(lambda x:len(x.split()))
-
-            plt.figure(figsize=(6,4))
-            sns.histplot(lengths,bins=30,kde=True)
-            plt.title("Character Length")
-            plt.show()
-
-            plt.figure(figsize=(6,4))
-            sns.histplot(words,bins=30,kde=True)
-            plt.title("Word Count")
-            plt.show()
-
-            print(lengths.describe())
-            print(words.describe())
-            break
-\end{lstlisting}
-
-\subsection{Image EDA -- \texttt{eda\_image\_csv()} and \texttt{eda\_image\_folder()}}
-\texttt{eda\_image\_csv()} is used for the \textit{MNIST} dataset, where each row is a
-flattened image with the label in the first column: it plots the class distribution, renders
-a $3\times3$ grid of sample digit images, and reports pixel-intensity mean, standard deviation,
-and distribution. \texttt{eda\_image\_folder()} is used for the \textit{Handwritten Character
-Recognition} dataset when it is organized as one sub-folder per class: it counts images per
-class and displays one sample image from each of the first six classes.
-\begin{lstlisting}
-def eda_image_csv(csv_path):
-    df=pd.read_csv(csv_path)
-
-    print(df.head())
-    print(df.shape)
-    print(df.isnull().sum())
-
-    target=df.columns[0]
-
-    sns.countplot(x=df[target])
-    plt.title("Class Distribution")
-    plt.show()
-
-    size=int((df.shape[1]-1)**0.5)
-
-    plt.figure(figsize=(8,8))
-    for i in range(min(9,len(df))):
-        plt.subplot(3,3,i+1)
-        img=df.iloc[i,1:].values.reshape(size,size)
-        plt.imshow(img,cmap="gray")
-        plt.title(df.iloc[i,0])
-        plt.axis("off")
-    plt.tight_layout()
-    plt.show()
-
-    pixels=df.iloc[:,1:]
-    print("Pixel Mean:",pixels.mean().mean())
-    print("Pixel Std:",pixels.std().mean())
-
-    sns.histplot(pixels.values.flatten(),bins=50)
-    plt.title("Pixel Distribution")
-    plt.show()
-
-
-def eda_image_folder(folder_path):
-    classes=[c for c in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path,c))]
-    print("Classes:",classes)
-
-    for c in classes:
-        print(c,":",len(os.listdir(os.path.join(folder_path,c))),"images")
-
-    plt.figure(figsize=(12,6))
-    for i,c in enumerate(classes[:6]):
-        folder=os.path.join(folder_path,c)
-        img=Image.open(os.path.join(folder,os.listdir(folder)[0]))
-        plt.subplot(2,3,i+1)
-        plt.imshow(img)
-        plt.title(c)
-        plt.axis("off")
-    plt.tight_layout()
-    plt.show()
-\end{lstlisting}
-
-\subsection{Example Usage}
-\begin{lstlisting}
-# Tabular
-eda_tabular("loan.csv")
-
-# Text
-eda_text("spam.csv")
-
-# Image CSV (MNIST)
-eda_image_csv("mnist.csv")
-
-# Image Folder
-eda_image_folder("dataset/train")
-\end{lstlisting}
-
-\textbf{Inference:} A single, modality-aware toolkit removes the need to hand-write EDA code
-for every new dataset. Because each function follows the same pattern -- load, summarize,
-visualize, quantify -- it standardizes the analysis across very different data types
-(structured numeric/categorical data, free text, and images), making it easy to plug in any
-of the five datasets used in this experiment by simply calling the matching function.
+Given five publicly available datasets -- Iris, Loan Amount Prediction, Diabetes Prediction,
+Email Spam Classification, and MNIST Handwritten Digit Classification -- the task is to load
+each dataset, identify the Machine Learning task it corresponds to (regression, binary
+classification, or multi-class classification), and perform exploratory data analysis to
+understand its structure, quality, and distribution. The input to the workflow is a raw
+dataset file (CSV); the output is a statistical and visual understanding of the dataset
+(distributions, missing values, correlations, class balance, outliers) that guides the choice
+of feature selection technique and ML algorithm for each dataset.
 
 \section{Dataset Description}
-The five datasets below were obtained as follows: Iris via \texttt{sklearn.datasets.load\_iris()};
-the Pima Indians Diabetes, Loan Prediction, and SMS Spam Collection datasets from their
-respective public GitHub mirrors of the original UCI/Kaggle releases; and MNIST from a public
-CSV mirror of the standard handwritten-digit dataset (a 3,000-row sample used here for
-tractable EDA). All five were loaded and profiled using the toolkit in Section~\ref{sec:eda-toolkit}.
 
-\begin{longtable}{|p{3.6cm}|p{2.6cm}|p{2.6cm}|p{2.5cm}|p{2.5cm}|}
+\subsection*{Iris Dataset}
+\begin{longtable}{|p{6cm}|p{8cm}|}
 \hline
-\textbf{Dataset} & \textbf{Samples $\times$ Features} & \textbf{Missing Values} & \textbf{Duplicates} & \textbf{Classes} \\ \hline
-\endhead
-Iris & 150 $\times$ 5 & 0 & 1 & 3 (balanced, 50 each) \\ \hline
-Pima Diabetes & 768 $\times$ 9 & 0 (nulls); 5 zero-Glucose, 374 zero-Insulin & 0 & 2 (500 / 268) \\ \hline
-Loan Prediction & 614 $\times$ 13 & 149 cells across 7 columns (worst: Credit\_History, 50) & 0 & 2 (422 Y / 192 N) \\ \hline
-SMS Spam & 5,572 $\times$ 2 & 0 & 403 & 2 (4,825 ham / 747 spam) \\ \hline
-MNIST (sample) & 3,000 $\times$ 785 & 0 & -- & 10 (roughly balanced, 270--332 each) \\ \hline
+Dataset Name & Iris \\ \hline
+Dataset Source & UCI Machine Learning Repository (via \texttt{sklearn.datasets.load\_iris}) \\ \hline
+Number of Samples & 150 \\ \hline
+Number of Features & 4 (sepal length, sepal width, petal length, petal width) \\ \hline
+Number of Classes & 3 (setosa, versicolor, virginica -- 50 each) \\ \hline
+Missing Values & 0 \\ \hline
+Train-Test Split & Not performed -- exploratory analysis only \\ \hline
 \end{longtable}
 
-\section{Dataset Exploration and ML Task Identification}
-
-\begin{longtable}{|p{3.3cm}|p{2.6cm}|p{3.6cm}|p{4.7cm}|}
+\subsection*{Pima Indians Diabetes Dataset}
+\begin{longtable}{|p{6cm}|p{8cm}|}
 \hline
-\textbf{Dataset} & \textbf{Type of ML Task} & \textbf{Feature Selection Technique} & \textbf{Suitable ML Algorithm} \\ \hline
-\endhead
-Iris Dataset & Supervised -- Multi-class Classification & ANOVA F-test (\texttt{SelectKBest} with \texttt{f\_classif}) & Logistic Regression / K-Nearest Neighbors / Decision Tree \\ \hline
-Loan Amount Prediction & Supervised -- Regression & Correlation analysis, ANOVA F-test (\texttt{f\_regression}) & Linear Regression / Random Forest Regressor \\ \hline
-Predicting Diabetes & Supervised -- Binary Classification & Chi-square test (\texttt{SelectKBest} with \texttt{chi2}) & Logistic Regression / Random Forest Classifier \\ \hline
-Classification of Email Spam & Supervised -- Binary Classification (Text) & Chi-square test on TF-IDF/Bag-of-Words features & Naive Bayes / Support Vector Machine (SVM) \\ \hline
-Handwritten Character Recognition / MNIST & Supervised -- Multi-class Classification (Image) & Variance thresholding / PCA (dimensionality reduction over pixel features) & Convolutional Neural Network (CNN) / SVM / Random Forest \\ \hline
+Dataset Name & Pima Indians Diabetes \\ \hline
+Dataset Source & UCI Machine Learning Repository / Kaggle \\ \hline
+Number of Samples & 768 \\ \hline
+Number of Features & 8 (Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age) \\ \hline
+Number of Classes & 2 (Outcome: 500 non-diabetic, 268 diabetic) \\ \hline
+Missing Values & 0 null cells; however 5 Glucose and 374 Insulin values are recorded as 0, which is physiologically implausible and indicates disguised missing data \\ \hline
+Train-Test Split & Not performed -- exploratory analysis only \\ \hline
 \end{longtable}
 
-\textbf{Inference:} All five datasets correspond to supervised learning tasks, split between
-regression (Loan Amount) and classification (Iris, Diabetes, Spam, MNIST). The choice of
-feature selection technique depends on the feature type: chi-square and ANOVA suit
-categorical/numeric tabular features, TF-IDF-based statistics suit text, and
-variance-based/PCA techniques suit high-dimensional pixel data.
+\subsection*{Loan Prediction Dataset}
+\begin{longtable}{|p{6cm}|p{8cm}|}
+\hline
+Dataset Name & Loan Prediction \\ \hline
+Dataset Source & Kaggle / Analytics Vidhya \\ \hline
+Number of Samples & 614 \\ \hline
+Number of Features & 11 (excluding Loan\_ID and target Loan\_Status) \\ \hline
+Number of Classes & 2 (Loan\_Status: 422 Approved, 192 Rejected) \\ \hline
+Missing Values & 149 missing cells across 7 columns (worst: Credit\_History -- 50) \\ \hline
+Train-Test Split & Not performed -- exploratory analysis only \\ \hline
+\end{longtable}
 
-\section{Exploratory Data Analysis -- Visualizations}
-The toolkit in Section~\ref{sec:eda-toolkit} was run on all five datasets described above.
-The resulting figures and the statistics they produced are reported per dataset below.
+\subsection*{SMS Spam Collection Dataset}
+\begin{longtable}{|p{6cm}|p{8cm}|}
+\hline
+Dataset Name & SMS Spam Collection \\ \hline
+Dataset Source & UCI Machine Learning Repository \\ \hline
+Number of Samples & 5,572 \\ \hline
+Number of Features & 1 text feature (message content) \\ \hline
+Number of Classes & 2 (4,825 ham, 747 spam) \\ \hline
+Missing Values & 0 (403 duplicate rows present) \\ \hline
+Train-Test Split & Not performed -- exploratory analysis only \\ \hline
+\end{longtable}
 
-\subsection{Iris Dataset}
+\subsection*{MNIST Dataset (Sample)}
+\begin{longtable}{|p{6cm}|p{8cm}|}
+\hline
+Dataset Name & MNIST Handwritten Digits (3,000-row sample) \\ \hline
+Dataset Source & MNIST database (LeCun et al.), CSV mirror \\ \hline
+Number of Samples & 3,000 \\ \hline
+Number of Features & 784 (28$\times$28 grayscale pixels) \\ \hline
+Number of Classes & 10 (digits 0--9, roughly balanced -- 270 to 332 each) \\ \hline
+Missing Values & 0 \\ \hline
+Train-Test Split & Not performed -- exploratory analysis only \\ \hline
+\end{longtable}
+
+\section{Exploratory Data Analysis}
+Include all relevant visualizations.
+\begin{itemize}
+\item Dataset overview
+\item Statistical summary
+\item Missing value analysis
+\item Class distribution
+\item Correlation matrix
+\item Feature distribution
+\end{itemize}
+
+\subsection*{Iris Dataset}
 
 \begin{figure}[H]
 \centering
@@ -433,7 +177,7 @@ versicolor and virginica.
 these are most plausibly genuine measurement variation rather than data-entry errors, so
 retaining them is reasonable.
 
-\subsection{Diabetes Dataset}
+\subsection*{Diabetes Dataset}
 
 \begin{figure}[H]
 \centering
@@ -474,7 +218,7 @@ this column will need explicit missing-value imputation rather than outlier remo
 features (BMI, Age, Pregnancies) show weaker but still positive associations, while no pair
 of predictors is correlated highly enough to suggest serious multicollinearity.
 
-\subsection{Loan Prediction Dataset}
+\subsection*{Loan Prediction Dataset}
 
 \begin{figure}[H]
 \centering
@@ -516,7 +260,7 @@ downstream task is framed as approval classification rather than amount regressi
 categories (Urban, Semiurban, Rural), with no single category dominating -- so one-hot
 encoding this feature should not introduce severe sparsity or imbalance concerns.
 
-\subsection{Email Spam Dataset}
+\subsection*{Email Spam Dataset}
 
 \begin{figure}[H]
 \centering
@@ -539,13 +283,12 @@ class weighting, are essential for a meaningful evaluation.
 \includegraphics[width=0.55\linewidth]{spam_word_count.png}
 \caption{Word count distribution -- Spam}
 \end{figure}
-\textbf{Inference:} Message length is itself discriminative: the toolkit's grouped statistics
-show spam messages average about 139 characters versus roughly 71 for ham -- almost double.
-Both distributions are right-skewed with a long tail toward longer messages (max 910
-characters), so character/word count could be added as an engineered feature alongside
-TF-IDF text features.
+\textbf{Inference:} Message length is itself discriminative: spam messages average about 139
+characters versus roughly 71 for ham -- almost double. Both distributions are right-skewed
+with a long tail toward longer messages, so character/word count could be added as an
+engineered feature alongside TF-IDF text features.
 
-\subsection{MNIST Dataset (3,000-sample subset)}
+\subsection*{MNIST Dataset}
 
 \begin{figure}[H]
 \centering
@@ -576,64 +319,133 @@ standard deviation ($\approx$78), and only about 19\% of pixels are non-zero. Th
 the images are mostly dark background with sparse bright strokes, and supports normalizing
 pixel values (dividing by 255) before feeding them into a CNN or any distance-based model.
 
-\section{Machine Learning Workflow}
-The general workflow followed for each dataset consists of:
-\begin{enumerate}
-\item \textbf{Loading the dataset} -- reading the raw file with \texttt{pandas.read\_csv()}
-(or \texttt{os}/\texttt{PIL} for image folders).
-\item \textbf{Exploratory Data Analysis and Visualization} -- using the toolkit in
-Section~\ref{sec:eda-toolkit} to inspect summary statistics, histograms, bar charts, box
-plots, and correlation heatmaps.
-\item \textbf{Data Preprocessing} -- handling missing values, dropping irrelevant features,
-encoding categorical variables (\texttt{LabelEncoder}/\texttt{OneHotEncoder}), and
-normalizing/standardizing numeric features (\texttt{StandardScaler}/\texttt{MinMaxScaler}).
-\item \textbf{Feature Selection} -- applying \texttt{SelectKBest} with the chi-square test or
-ANOVA F-test to retain the most relevant features, as summarized in the table above.
-\item \textbf{Data Splitting} -- dividing each dataset into training, validation, and testing
-subsets using \texttt{train\_test\_split}.
-\item \textbf{Performance Evaluation} -- selecting metrics appropriate to the task (accuracy,
-precision, recall, F1-score, ROC-AUC for classification; RMSE/MAE/$R^2$ for regression) and
-visualizing results with confusion matrices or residual plots.
-\end{enumerate}
+\section{Data Preprocessing}
+
+Explain:
+\begin{itemize}
+\item \textbf{Missing value handling:} Iris and MNIST require no imputation. Diabetes needs
+the disguised zero-placeholders in Glucose and Insulin replaced with median/mean imputation
+per Outcome class. Loan needs mode imputation for categorical columns (Gender,
+Self\_Employed, Credit\_History) and median imputation for LoanAmount.
+\item \textbf{Encoding:} Categorical features in Loan (Gender, Married, Education,
+Self\_Employed, Property\_Area) and the target labels in Diabetes/Spam/Iris/Loan require
+Label or One-Hot Encoding before modelling.
+\item \textbf{Feature scaling:} Diabetes and Loan numeric features (Glucose, BMI,
+ApplicantIncome) span very different ranges and should be standardized
+(\texttt{StandardScaler}) or normalized (\texttt{MinMaxScaler}). MNIST pixel values should be
+scaled to $[0,1]$ by dividing by 255.
+\item \textbf{Train-test split:} Not performed in this experiment, which is limited to
+exploratory analysis; a typical 80:20 or 70:30 stratified split would be used in a subsequent
+modelling experiment.
+\item \textbf{Feature engineering (if applicable):} For Spam, message character length and
+word count (already explored in Section 4) could be added as engineered numeric features
+alongside text-vectorized (TF-IDF) features.
+\end{itemize}
+
+\section{Machine Learning Algorithm}
+
+Based on the EDA findings, the following algorithms are recommended for each dataset (feature
+selection technique and full task identification is summarized in the table below).
+
+\begin{longtable}{|p{3.3cm}|p{2.6cm}|p{3.6cm}|p{4.7cm}|}
+\hline
+\textbf{Dataset} & \textbf{Type of ML Task} & \textbf{Feature Selection Technique} & \textbf{Suitable ML Algorithm} \\ \hline
+\endhead
+Iris & Supervised -- Multi-class Classification & ANOVA F-test (\texttt{SelectKBest} with \texttt{f\_classif}) & Logistic Regression / K-Nearest Neighbors / Decision Tree \\ \hline
+Loan Amount Prediction & Supervised -- Regression & Correlation analysis, ANOVA F-test (\texttt{f\_regression}) & Linear Regression / Random Forest Regressor \\ \hline
+Predicting Diabetes & Supervised -- Binary Classification & Chi-square test (\texttt{SelectKBest} with \texttt{chi2}) & Logistic Regression / Random Forest Classifier \\ \hline
+Classification of Email Spam & Supervised -- Binary Classification (Text) & Chi-square test on TF-IDF/Bag-of-Words features & Naive Bayes / Support Vector Machine (SVM) \\ \hline
+Handwritten Character Recognition / MNIST & Supervised -- Multi-class Classification (Image) & Variance thresholding / PCA (dimensionality reduction over pixel features) & Convolutional Neural Network (CNN) / SVM / Random Forest \\ \hline
+\end{longtable}
+
+\textbf{Working principle (representative example -- Logistic Regression):} Models the
+probability of a binary/multi-class outcome using a linear combination of input features
+passed through a sigmoid (or softmax) function, trained by minimizing log-loss via gradient
+descent.
+
+\textbf{Mathematical formulation:}
+$$P(y=1\mid x) = \sigma(w^\top x + b) = \frac{1}{1+e^{-(w^\top x + b)}}$$
+
+\textbf{Advantages:} Simple, interpretable, computationally cheap, works well when classes
+are near-linearly separable (as seen for setosa in the Iris pair plot).
+
+\textbf{Limitations:} Struggles with non-linear decision boundaries and is sensitive to
+unscaled features and multicollinearity -- both relevant given the skewed income feature in
+the Loan dataset and the correlated petal measurements in Iris.
 
 \section{Experimental Setup}
 \begin{tabular}{ll}
 \toprule
 Python Version & \\
-Pandas / NumPy / SciPy / Scikit-Learn Version & \\
+Scikit-Learn Version & \\
 IDE & Jupyter Notebook \\
 Operating System & \\
 Hardware & \\
 \bottomrule
 \end{tabular}
 
+\section{Hyperparameter Selection}
+Not applicable for this experiment -- Experiment 1 covers library exploration, dataset
+identification, and EDA only; no model was trained or tuned.
+
+\begin{tabular}{ll}
+\toprule
+Parameter & Value\\
+\midrule
+-- & -- \\
+\bottomrule
+\end{tabular}
+
+\section{Results}
+Not applicable for this experiment -- no model was trained. The equivalent deliverable for
+this experiment, the ML task/feature-selection/algorithm identification table, is provided in
+Section 6.
+
+\begin{tabular}{lc}
+\toprule
+Metric & Value\\
+\midrule
+Accuracy & -- \\
+Precision & -- \\
+Recall & -- \\
+F1-score & -- \\
+ROC-AUC & -- \\
+\bottomrule
+\end{tabular}
+
+\section{Result Visualization}
+Not applicable for this experiment -- no model was trained, so no confusion matrix, ROC
+curve, or learning curve is available. The dataset-level visualizations (distributions,
+correlations, class balance) generated for this experiment are provided in Section 4.
+
 \section{Discussion}
-The Universal EDA Toolkit demonstrates that a small set of well-structured functions can
-generalize across tabular, text, and image data, which are the three broad modalities
-encountered across the five prescribed datasets. Grouping missing-value analysis, univariate
-distribution plots, and correlation/outlier analysis into a single tabular routine
-significantly reduces repeated exploration code. A limitation is that the image-CSV function
-assumes square, single-channel images and that the text function only profiles the first
-high-cardinality text column found -- both would need to be generalized further for more
-complex, multi-column or multi-channel datasets.
+Across all five datasets, EDA surfaced issues that would materially affect modelling: disguised
+missing values (zeros) in Diabetes, genuine missing values concentrated in a few key columns
+in Loan, class imbalance in Diabetes/Loan/Spam, and a heavily right-skewed income feature in
+Loan. Iris and MNIST were the cleanest datasets, with no missing values and reasonably
+balanced classes. These findings directly justify the feature selection technique and
+algorithm choices recommended in Section 6 -- e.g. chi-square/ANOVA tests for the tabular
+datasets, TF-IDF-based selection for text, and PCA/variance thresholding for the
+high-dimensional MNIST pixel features.
 
 \section{Conclusion}
 This experiment explored the core NumPy, Pandas, SciPy, Scikit-learn, and Matplotlib/Seaborn
 functionality needed for a Machine Learning workflow, and used it to identify the ML task
 type, suitable feature selection technique, and suitable algorithm for five public datasets
 (Iris, Loan Amount Prediction, Diabetes Prediction, Email Spam Classification, and MNIST /
-Handwritten Character Recognition). A reusable, modality-aware EDA toolkit was built and
-applied to standardize the exploratory analysis across all five datasets.
+Handwritten Character Recognition). Exploratory data analysis on the real datasets revealed
+concrete data-quality issues (disguised missing values, skewed distributions, class
+imbalance) that will directly inform preprocessing decisions in subsequent experiments.
 
 \section{References}
 \begin{enumerate}[label={[\arabic*]}]
-\item NumPy Documentation, \url{https://numpy.org/doc/}
-\item Pandas Documentation, \url{https://pandas.pydata.org/docs/}
-\item SciPy Documentation, \url{https://docs.scipy.org/doc/scipy/}
+\item R. A. Fisher, ``The Use of Multiple Measurements in Taxonomic Problems,'' \textit{Annals of Eugenics}, 1936. Dataset accessed via \url{https://scikit-learn.org/stable/datasets/toy_dataset.html}
+\item National Institute of Diabetes and Digestive and Kidney Diseases, ``Pima Indians Diabetes Dataset,'' UCI Machine Learning Repository, \url{https://archive.ics.uci.edu/}
+\item Analytics Vidhya, ``Loan Prediction Dataset,'' Kaggle, \url{https://www.kaggle.com/datasets}
+\item T. A. Almeida, J. M. G. Hidalgo, ``SMS Spam Collection Dataset,'' UCI Machine Learning Repository, \url{https://archive.ics.uci.edu/}
+\item Y. LeCun, C. Cortes, C. J. C. Burges, ``The MNIST Database of Handwritten Digits,'' \url{http://yann.lecun.com/exdb/mnist/}
 \item Scikit-learn Documentation, \url{https://scikit-learn.org/stable/}
-\item Matplotlib Documentation, \url{https://matplotlib.org/stable/}
-\item UCI Machine Learning Repository, \url{https://archive.ics.uci.edu/}
-\item Kaggle Datasets, \url{https://www.kaggle.com/datasets}
+\item Pandas Documentation, \url{https://pandas.pydata.org/docs/}
 \end{enumerate}
 
 \end{document}
