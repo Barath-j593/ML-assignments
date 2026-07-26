@@ -27,9 +27,9 @@
 \hline
 Experiment No. & 3 \\ \hline
 Experiment Title & Regression Analysis using Linear and Regularized Models
-\footnote{\textbf{GitHub Repository: }\url{https://github.com/username/repository}}\\ \hline
+\footnote{\textbf{GitHub Repository: }\url{https://github.com/Barath-j593/ML-assignments}}\\ \hline
 Student Name & Barath \\ \hline
-Register Number & \\ \hline
+Register Number & 3122247001011 \\ \hline
 Faculty & Dr. Poreddy Ajay Kumar Reddy \\ \hline
 Submission Date & \\ \hline
 \end{tabular}
@@ -77,7 +77,7 @@ Loan\_Amount\_Term, and Credit\_History were standardized (zero mean, unit varia
 \end{itemize}
 
 \section{Implementation Details}
-All four models were implemented using scikit-learn, wrapped in a single
+Across the four models were implemented using scikit-learn, wrapped in a single
 \texttt{Pipeline} (preprocessing $\rightarrow$ model) to keep preprocessing consistent across
 cross-validation folds and the held-out test set.
 
@@ -111,7 +111,7 @@ log-transform of the target in a follow-up iteration of this experiment.
 \caption{ApplicantIncome vs. LoanAmount}
 \end{figure}
 \textbf{Inference:} ApplicantIncome shows a moderate positive correlation with LoanAmount
-($r \approx 0.57$), the strongest of any single numeric feature, consistent with it emerging
+($r \approx 0.57$), the strongest of any single numeric feature, which matches it emerging
 as the most heavily weighted feature in every model's coefficients (Section 6). The
 relationship is noisy and heteroscedastic -- variance in LoanAmount increases at higher
 incomes.
@@ -133,7 +133,7 @@ coefficient for this feature across all four models.
 \end{figure}
 \textbf{Inference:} Points scatter loosely around the ideal $y=x$ line rather than tracking
 it tightly, and the model visibly under-predicts for the highest actual loan amounts (the
-right-skew tail), consistent with a linear model struggling to capture the more extreme,
+right-skew tail), which matches a linear model struggling to capture the more extreme,
 rarer high-value loans.
 
 \begin{figure}[H]
@@ -143,7 +143,7 @@ rarer high-value loans.
 \end{figure}
 \textbf{Inference:} Residuals are not randomly scattered around zero -- they fan out and skew
 positive as predicted values increase, a classic heteroscedasticity signature tied directly to
-the right-skewed target distribution seen in Figure 1. This indicates the constant-variance
+the right-skewed target distribution seen in Figure 1. Taken together, this suggests the constant-variance
 assumption of ordinary least squares is violated, and a log-transformed target would likely
 produce more homogeneous residuals.
 
@@ -208,7 +208,7 @@ Elastic Net Regression & 36.81 & 3087.84 & 55.57 & 0.1624 \\ \hline
 set (Linear: 7.2ms, Ridge: 6.7ms, Lasso: 7.0ms, Elastic Net: 6.8ms) -- negligible and not a
 practical differentiator at this dataset size.
 
-\textbf{Note on CV vs. test $R^2$:} All four models score noticeably higher $R^2$ on
+\textbf{Note on CV vs. test $R^2$:} Across the four models score noticeably higher $R^2$ on
 5-fold cross-validation ($\approx$0.30--0.34) than on the single held-out test set
 ($\approx$0.09--0.16). With only 592 usable samples, a single 119-row test split carries
 high variance in its $R^2$ estimate; the CV numbers, averaged over five folds, are the more
@@ -239,15 +239,15 @@ consistently preferred over weaker settings is itself evidence that the baseline
 was not egregiously overfitting -- if it were, weak regularization would have already
 generalized poorly and the search would have pushed toward much larger $\alpha$ to compensate
 for high variance; instead the improvement from regularization is modest (CV $R^2$ 0.30
-$\rightarrow$ 0.34), consistent with a bias-dominated, not variance-dominated, problem.
+$\rightarrow$ 0.34), which matches a bias-dominated, not variance-dominated, problem.
 \item \textbf{Improvement in generalization after tuning:} Ridge and Elastic Net improved test
 RMSE from 57.79 (Linear) to about 55.5, and test $R^2$ nearly doubled (0.094 $\rightarrow$
-0.16--0.16). This is a genuine but modest improvement -- regularization helped, but the
+0.16--0.16). The improvement is real, but not dramatic -- regularization helped, but the
 ceiling on all four models' performance is set by the limited linear signal available in the
 features, not by uncontrolled overfitting.
 \end{itemize}
-\textbf{Conclusion of this section:} The dominant issue for this dataset is
-\textbf{underfitting (high bias)}, not overfitting. All four models plateau at a similar,
+\textbf{Conclusion of this section:} The main limitation for this dataset is
+\textbf{underfitting (high bias)}, not overfitting. Across the four models plateau at a similar,
 modest $R^2$, and adding regularization only marginally improves results -- indicating that
 the ten available features do not fully explain the variance in LoanAmount, likely because
 larger, more influential drivers of loan amount (e.g. property value, requested amount,
@@ -277,22 +277,22 @@ signal that Ridge's softer shrinkage preserved.
 \end{itemize}
 
 \section{Observations and Conclusion}
-All four models converge to a similar, modest performance ceiling (test $R^2$ between 0.09
-and 0.16), with \textbf{Ridge Regression} emerging as the best-performing model on both
+Across the four models converge to a similar, modest performance ceiling (test $R^2$ between 0.09
+and 0.16), with \textbf{Ridge Regression} appearing as the best-performing model on both
 cross-validation ($R^2=0.3403$) and the held-out test set (RMSE $=55.50$, $R^2=0.1646$),
 tuned to $\alpha=100$. Lasso's aggressive feature elimination did not improve performance
 over Ridge or Elastic Net, indicating most of the encoded categorical features carry at least
-weak signal rather than being pure noise. The overall pattern across every diagnostic
+weak signal rather than being pure noise. The Looking at everything together across every diagnostic
 (learning curve, CV-vs-test gap, coefficient shrinkage) points to \textbf{underfitting driven
 by limited feature information} rather than overfitting: ApplicantIncome and
 CoapplicantIncome dominate every model's coefficients, and the available categorical
 features (marital status, education, employment, property area) contribute only marginal
-additional explanatory power. A meaningful next step would be engineering additional
+additional explanatory power. A practical next step would be engineering additional
 features (e.g. income-to-loan-term ratio) or acquiring features more directly tied to the
 lender's actual approval formula, rather than further regularization tuning, since
 regularization strength is not the binding constraint here.
 
-The trade-off between accuracy and model complexity in this experiment is therefore small:
+The trade-off between accuracy and model complexity in this experiment is overall small:
 Ridge's mild additional complexity (one tuned hyperparameter) bought a real but modest gain
 over the simpler, parameter-free Linear Regression baseline, while Lasso's added complexity
 (automatic feature selection) did not translate into a performance advantage on this dataset.
